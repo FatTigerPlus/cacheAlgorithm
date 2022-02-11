@@ -12,7 +12,7 @@ type Node struct {
 func NewLRUCache(capacity int) *LRUCache {
 	return &LRUCache{
 		capacity: capacity,
-		cache:    make(map[interface{}]*Node),
+		table:    make(map[interface{}]*Node),
 	}
 }
 
@@ -20,7 +20,7 @@ type LRUCache struct {
 	sync.Mutex // prevent multiple goroutine write
 
 	capacity int // the capacity of cache
-	cache    map[interface{}]*Node
+	table    map[interface{}]*Node
 	head     *Node
 	end      *Node
 }
@@ -58,7 +58,7 @@ func (cache *LRUCache) delete(node *Node) {
 }
 
 func (cache *LRUCache) Set(key, val interface{}) error {
-	if v, ok := cache.cache[key]; ok {
+	if v, ok := cache.table[key]; ok {
 		v.val = val
 		cache.delete(v)
 		cache.setHead(v)
@@ -68,19 +68,19 @@ func (cache *LRUCache) Set(key, val interface{}) error {
 		key: key,
 		val: val,
 	}
-	if len(cache.cache) >= cache.capacity {
-		delete(cache.cache, cache.end.key)
+	if len(cache.table) >= cache.capacity {
+		delete(cache.table, cache.end.key)
 		cache.delete(cache.end)
 	}
 	cache.setHead(node)
 	cache.Lock()
-	cache.cache[key] = node
+	cache.table[key] = node
 	cache.Unlock()
 	return nil
 }
 
 func (cache *LRUCache) Get(key interface{}) (interface{}, error) {
-	if v, ok := cache.cache[key]; ok {
+	if v, ok := cache.table[key]; ok {
 		cache.delete(v)
 		cache.setHead(v)
 		return v.val, nil
